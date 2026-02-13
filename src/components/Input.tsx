@@ -8,7 +8,7 @@ interface InputProps {
 
 export function Input({ type, placeholder, required, errors, name }: InputProps) {
   return (
-    <div className="flex-cols flex gap-1">
+    <div className="flex flex-col gap-1">
       <input
         className="rounded-lg border-2 border-gray-200 px-4 py-2 text-gray-900 placeholder:text-gray-300"
         name={name}
@@ -17,7 +17,7 @@ export function Input({ type, placeholder, required, errors, name }: InputProps)
         required={required}
       />
       {errors?.map(error => (
-        <span key={error} className="text-red-500">
+        <span key={error} className="text-xs text-red-500">
           {error}
         </span>
       ))}

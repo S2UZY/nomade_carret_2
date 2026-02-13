@@ -1,29 +1,42 @@
 'use server'
 
-import { headers } from 'next/headers'
+import z from 'zod'
 
-export type LoginState = { success: boolean; message: string }
+import { loginSchema } from '@/schema/login'
 
-export async function handleLogin(_prevState: LoginState, formData: FormData): Promise<LoginState> {
-  const password = formData.get('password')
-  const headersList = await headers()
-  const host = headersList.get('host') ?? 'localhost:3000'
-  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
-  const baseUrl = `${protocol}://${host}`
+export type LoginState = {
+  success: boolean
+  error: {
+    email: string[]
+    username: string[]
+    password: string[]
+  } | null
+}
 
-  const response = await fetch(`${baseUrl}/www/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ password }),
-  })
-
-  const data = await response.json().catch(() => ({ message: '요청을 처리할 수 없습니다.' }))
-
-  if (response.status === 200) {
-    return { success: true, message: '로그인 성공' }
+export async function handleLogin(_prevState: LoginState, formData: FormData) {
+  const data = {
+    email: formData.get('email'),
+    username: formData.get('username'),
+    password: formData.get('password'),
   }
 
-  return { success: false, message: data.message ?? '로그인 실패' }
+  const result = loginSchema.safeParse(data)
+
+  if (!result.success) {
+    const tree = z.treeifyError(result.error)
+
+    return {
+      success: false,
+      error: {
+        email: tree.properties?.email?.errors ?? [],
+        username: tree.properties?.username?.errors ?? [],
+        password: tree.properties?.password?.errors ?? [],
+      },
+    }
+  }
+
+  return {
+    success: true,
+    error: null,
+  }
 }
